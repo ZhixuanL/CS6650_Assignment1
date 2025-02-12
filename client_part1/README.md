@@ -7,12 +7,11 @@ This part implements a **multithreaded Java client** that sends concurrent HTTP 
 - Measures **successful requests, failed requests, total execution time, and throughput**.
 
 ## How to Run  
-git clone  
 cd client_part1  
 mvn compile  
 mvn exec:java -Dexec.mainClass="SimpleSkiClient"
 
-============================================== Results ===============================================  
+============================================ Results =============================================  
 Total Requests Sent: 32000  
 Successful Requests: 32000  
 Failed Requests: 0  
