@@ -11,7 +11,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SimpleSkiClient {
-  private static final String SERVER_URL = "http://34.209.250.50:8080/CS6650_Assignment1_war/skiers";
+  private static final String SERVER_URL = "http://35.91.153.194:8080/CS6650_Assignment1_war/skiers";
   private static final int NUM_THREADS = 32;
   private static final int REQUESTS_PER_THREAD = 1000;
   private static final int TOTAL_REQUESTS = 200000;
@@ -19,8 +19,8 @@ public class SimpleSkiClient {
   private static final AtomicInteger successCount = new AtomicInteger(0);
   private static final AtomicInteger failureCount = new AtomicInteger(0);
 
-  // Thread-safe list to store request logs
-  private static final List<String[]> requestLogs = new CopyOnWriteArrayList<>();
+  // Using `ConcurrentLinkedQueue` instead of `CopyOnWriteArrayList` for better performance
+  private static final Queue<String[]> requestLogs = new ConcurrentLinkedQueue<>();
 
   public static void main(String[] args) {
     generateLiftRideData();
@@ -30,7 +30,7 @@ public class SimpleSkiClient {
         .connectTimeout(Duration.ofSeconds(60))
         .build();
 
-    long startTime = System.currentTimeMillis(); // Start time for performance measurement
+    long startTime = System.currentTimeMillis(); // Record test start time
 
     for (int i = 0; i < NUM_THREADS; i++) {
       executor.execute(() -> {
@@ -54,10 +54,10 @@ public class SimpleSkiClient {
       e.printStackTrace();
     }
 
-    long endTime = System.currentTimeMillis(); // End time for performance measurement
+    long endTime = System.currentTimeMillis(); // Record test end time
     double totalTimeSeconds = (endTime - startTime) / 1000.0;
 
-    // Print basic request results
+    // Print basic results
     System.out.println("====== Results ======");
     System.out.println("Total Requests Sent: " + (successCount.get() + failureCount.get()));
     System.out.println("Successful Requests: " + successCount.get());
@@ -65,13 +65,14 @@ public class SimpleSkiClient {
     System.out.println("Total Time Taken: " + totalTimeSeconds + " seconds");
     System.out.println("Throughput: " + (successCount.get() / totalTimeSeconds) + " requests/sec");
 
-    // Save logs to CSV
+    // Write logs asynchronously
     writeLogsToCSV("request_logs.csv");
 
-    // Analyze latencies
+    // Compute performance metrics
     calculateStatistics(totalTimeSeconds);
   }
 
+  // Generate lift ride data and store in BlockingQueue
   private static void generateLiftRideData() {
     new Thread(() -> {
       for (int i = 0; i < TOTAL_REQUESTS; i++) {
@@ -86,6 +87,7 @@ public class SimpleSkiClient {
     }).start();
   }
 
+  // Send HTTP POST request with retry mechanism
   private static void sendPostRequest(HttpClient client, String jsonBody) {
     int retryCount = 0;
     while (retryCount < 5) {
@@ -108,6 +110,7 @@ public class SimpleSkiClient {
           failureCount.incrementAndGet();
         }
 
+        // Store logs but defer CSV writing
         requestLogs.add(new String[]{
             String.valueOf(startTime),
             "POST",
@@ -133,18 +136,22 @@ public class SimpleSkiClient {
     System.out.println("Request failed after 5 retries.");
   }
 
+  // Asynchronously write logs to CSV
   private static void writeLogsToCSV(String filename) {
-    try (FileWriter writer = new FileWriter(filename)) {
-      writer.write("Start Time,Request Type,Latency (ms),Response Code\n");
-      for (String[] log : requestLogs) {
-        writer.write(String.join(",", log) + "\n");
+    new Thread(() -> {
+      try (FileWriter writer = new FileWriter(filename)) {
+        writer.write("Start Time,Request Type,Latency (ms),Response Code\n");
+        for (String[] log : requestLogs) {
+          writer.write(String.join(",", log) + "\n");
+        }
+        System.out.println("Request logs saved to " + filename);
+      } catch (IOException e) {
+        e.printStackTrace();
       }
-      System.out.println("Request logs saved to " + filename);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+    }).start();
   }
 
+  // Compute performance metrics based on logged data
   private static void calculateStatistics(double totalTimeSeconds) {
     List<Long> latencies = new ArrayList<>();
     long minLatency = Long.MAX_VALUE;
@@ -165,12 +172,13 @@ public class SimpleSkiClient {
       return;
     }
 
+    // Sort for percentile calculations
     Collections.sort(latencies);
     double mean = (double) totalLatency / latencies.size();
     long median = latencies.get(latencies.size() / 2);
     long p99 = latencies.get((int) (latencies.size() * 0.99));
 
-    // Print latency metrics
+    // Print performance metrics
     System.out.println("====== Performance Metrics ======");
     System.out.println("Mean Response Time: " + String.format("%.2f", mean) + " ms");
     System.out.println("Median Response Time: " + median + " ms");
