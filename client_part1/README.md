@@ -10,10 +10,3 @@ This part implements a **multithreaded Java client** that sends concurrent HTTP 
 cd client_part1  
 mvn compile  
 mvn exec:java -Dexec.mainClass="SimpleSkiClient"
-
-============================================ Results =============================================  
-Total Requests Sent: 32000  
-Successful Requests: 32000  
-Failed Requests: 0  
-Total Time Taken: 30.567 seconds  
-Throughput: 1046.88 requests/sec
