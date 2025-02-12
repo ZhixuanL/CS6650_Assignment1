@@ -6,14 +6,12 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.ArrayList;
-import java.util.Collections;
 
 public class SimpleSkiClient {
-  private static final String SERVER_URL = "http://18.236.127.96:8080/CS6650_Assignment1_war/skiers";
+  private static final String SERVER_URL = "http://34.209.250.50:8080/CS6650_Assignment1_war/skiers";
   private static final int NUM_THREADS = 32;
   private static final int REQUESTS_PER_THREAD = 1000;
   private static final int TOTAL_REQUESTS = 200000;
@@ -59,6 +57,7 @@ public class SimpleSkiClient {
     long endTime = System.currentTimeMillis(); // End time for performance measurement
     double totalTimeSeconds = (endTime - startTime) / 1000.0;
 
+    // Print basic request results
     System.out.println("====== Results ======");
     System.out.println("Total Requests Sent: " + (successCount.get() + failureCount.get()));
     System.out.println("Successful Requests: " + successCount.get());
@@ -66,9 +65,11 @@ public class SimpleSkiClient {
     System.out.println("Total Time Taken: " + totalTimeSeconds + " seconds");
     System.out.println("Throughput: " + (successCount.get() / totalTimeSeconds) + " requests/sec");
 
-    System.out.println("Total logged requests: " + requestLogs.size());
-
+    // Save logs to CSV
     writeLogsToCSV("request_logs.csv");
+
+    // Analyze latencies
+    calculateStatistics(totalTimeSeconds);
   }
 
   private static void generateLiftRideData() {
@@ -88,7 +89,7 @@ public class SimpleSkiClient {
   private static void sendPostRequest(HttpClient client, String jsonBody) {
     int retryCount = 0;
     while (retryCount < 5) {
-      long startTime = System.currentTimeMillis(); // Record request start time
+      long startTime = System.currentTimeMillis();
       try {
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(SERVER_URL))
@@ -98,8 +99,8 @@ public class SimpleSkiClient {
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-        long endTime = System.currentTimeMillis(); // Record request end time
-        long latency = endTime - startTime; // Calculate response latency
+        long endTime = System.currentTimeMillis();
+        long latency = endTime - startTime;
 
         if (response.statusCode() == 201) {
           successCount.incrementAndGet();
@@ -142,5 +143,40 @@ public class SimpleSkiClient {
     } catch (IOException e) {
       e.printStackTrace();
     }
+  }
+
+  private static void calculateStatistics(double totalTimeSeconds) {
+    List<Long> latencies = new ArrayList<>();
+    long minLatency = Long.MAX_VALUE;
+    long maxLatency = Long.MIN_VALUE;
+    long totalLatency = 0;
+
+    for (String[] log : requestLogs) {
+      long latency = Long.parseLong(log[2]);
+
+      latencies.add(latency);
+      totalLatency += latency;
+      minLatency = Math.min(minLatency, latency);
+      maxLatency = Math.max(maxLatency, latency);
+    }
+
+    if (latencies.isEmpty()) {
+      System.out.println("No latency data found.");
+      return;
+    }
+
+    Collections.sort(latencies);
+    double mean = (double) totalLatency / latencies.size();
+    long median = latencies.get(latencies.size() / 2);
+    long p99 = latencies.get((int) (latencies.size() * 0.99));
+
+    // Print latency metrics
+    System.out.println("====== Performance Metrics ======");
+    System.out.println("Mean Response Time: " + String.format("%.2f", mean) + " ms");
+    System.out.println("Median Response Time: " + median + " ms");
+    System.out.println("99th Percentile Response Time: " + p99 + " ms");
+    System.out.println("Min Response Time: " + minLatency + " ms");
+    System.out.println("Max Response Time: " + maxLatency + " ms");
+    System.out.println("Throughput: " + String.format("%.2f", requestLogs.size() / totalTimeSeconds) + " requests/sec");
   }
 }
