@@ -8,7 +8,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SimpleSkiClient {
-  private static final String SERVER_URL = "http://35.92.46.125:8080/CS6650_Assignment1_war/skiers";
+  private static final String SERVER_URL = "http://18.236.127.96:8080/CS6650_Assignment1_war/skiers";
   private static final int NUM_THREADS = 32;  // Set to 32 threads as required
   private static final int REQUESTS_PER_THREAD = 1000;
   private static final int TOTAL_REQUESTS = 200000;  // Target 200,000 requests
