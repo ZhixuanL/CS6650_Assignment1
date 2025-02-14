@@ -11,7 +11,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SimpleSkiClient {
-  private static final String SERVER_URL = "http://35.91.153.194:8080/CS6650_Assignment1_war/skiers";
+  private static final String SERVER_URL = "http://35.90.241.210:8080/CS6650_Assignment1_war/skiers";
   private static final int NUM_THREADS = 32;
   private static final int REQUESTS_PER_THREAD = 1000;
   private static final int TOTAL_REQUESTS = 200000;
@@ -23,6 +23,8 @@ public class SimpleSkiClient {
   private static final Queue<String[]> requestLogs = new ConcurrentLinkedQueue<>();
 
   public static void main(String[] args) {
+    System.out.println("Threads used: " + NUM_THREADS);
+
     generateLiftRideData();
 
     ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS);
