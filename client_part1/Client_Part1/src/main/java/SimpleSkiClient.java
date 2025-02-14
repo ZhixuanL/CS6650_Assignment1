@@ -19,6 +19,8 @@ public class SimpleSkiClient {
   private static final AtomicInteger failureCount = new AtomicInteger(0);
 
   public static void main(String[] args) {
+    System.out.println("Threads used: " + NUM_THREADS);
+
     // Start data generation thread
     generateLiftRideData();
 
