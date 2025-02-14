@@ -3,10 +3,14 @@
 ## Overview:
 This is an enhanced version of the **multithreaded Java client** from **Client Part 1**, with additional performance instrumentation. The client sends **200,000 POST requests** to the server while tracking request latency and response codes.
 
-## How to run:
 
+## How to Run:  
+Before running the client, update the server URL in the code. The base URL should match the server deployment:  
+private static final String SERVER_URL = "http://<server-url>:8080/CS6650_Assignment1_war/skiers";  
+Replace <server-url> with the actual server IP or hostname.  
 
-
+The client records each request's timestamp, latency, response code, and request type in a CSV file:  
+CS6650_Assignment1/client_part2/Client_Part2/request/logs.csv  
 
 
 ## Example output:
